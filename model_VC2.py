@@ -161,20 +161,20 @@ class Generator(nn.Module):
                                out_channels=128,
                                kernel_size=[5,15],
                                stride=1,
-                               padding=7)
+                               padding=[2,7])
 
         self.conv1_gates = nn.Conv2d(in_channels=1,
                                out_channels=128,
                                kernel_size=[5,15],
                                stride=1,
-                               padding=7)
+                               padding=[2,7])
 
         # Downsample Layer
         self.downSample1 = downSample_Generator(in_channels=128,
                                                 out_channels=256,
                                                 kernel_size=5,
                                                 stride=2,
-                                                padding=1)
+                                                padding=2)
 
         self.downSample2 = downSample_Generator(in_channels=256,
                                                 out_channels=512,
@@ -242,7 +242,7 @@ class Generator(nn.Module):
                                        out_channels=24,
                                        kernel_size=[5,15],
                                        stride=1,
-                                       padding=7)
+                                       padding=[2,7])
 
     def forward(self, input):
         # GLU
@@ -300,11 +300,11 @@ class Discriminator(nn.Module):
         self.convLayer1 = nn.Conv2d(in_channels=1,
                                     out_channels=128,
                                     kernel_size=[3, 3],
-                                    stride=[1, 2])
+                                    stride=[1, 1])
         self.convLayer1_gates = nn.Conv2d(in_channels=1,
                                           out_channels=128,
                                           kernel_size=[3, 3],
-                                          stride=[1, 2])
+                                          stride=[1, 1])
 
         # Note: Kernel Size have been modified in the PyTorch implementation
         # compared to the actual paper, as to retain dimensionality. Unlike,
@@ -326,13 +326,26 @@ class Discriminator(nn.Module):
 
         self.downSample3 = DownSample_Discriminator(in_channels=512,
                                                     out_channels=1024,
-                                                    kernel_size=[6, 3],
-                                                    stride=[1, 2],
+                                                    kernel_size=[3, 3],
+                                                    stride=[2, 2],
                                                     padding=0)
 
+        self.downSample4 = DownSample_Discriminator(in_channels=1024,
+                                                    out_channels=1024,
+                                                    kernel_size=[1, 5],
+                                                    stride=[1, 1],
+                                                    padding=[0, 2])
+
         # Fully Connected Layer
-        self.fc = nn.Linear(in_features=1024,
-                            out_features=1)
+        '''self.fc = nn.Linear(in_features=1024,
+                            out_features=1)'''
+
+        # output Layer
+        self.output_layer = nn.Conv2d(in_channels=1024,
+                                      out_channels=1,
+                                      kernel_size=[1, 3],
+                                      stride=[1, 1],
+                                      padding=[0, 1])
 
     # def downSample(self, in_channels, out_channels, kernel_size, stride, padding):
     #     convLayer = nn.Sequential(nn.Conv2d(in_channels=in_channels,
@@ -350,7 +363,7 @@ class Discriminator(nn.Module):
         # discriminator requires shape [batchSize, 1, num_features, time]
         input = input.unsqueeze(1)
         # GLU
-        pad_input = nn.ZeroPad2d((1, 0, 1, 1))
+        pad_input = nn.ZeroPad2d((1, 1, 1, 1))
         layer1 = self.convLayer1(
             pad_input(input)) * torch.sigmoid(self.convLayer1_gates(pad_input(input)))
 
@@ -360,13 +373,17 @@ class Discriminator(nn.Module):
         pad_input = nn.ZeroPad2d((1, 0, 1, 0))
         downSample2 = self.downSample2(pad_input(downSample1))
 
-        pad_input = nn.ZeroPad2d((1, 0, 3, 2))
+        pad_input = nn.ZeroPad2d((1, 0, 1, 0))
         downSample3 = self.downSample3(pad_input(downSample2))
 
-        downSample3 = downSample3.contiguous().permute(0, 2, 3, 1).contiguous()
+        downSample4 = self.downSample4(downSample3)
+        downSample4 = self.output_layer(downSample4)
+
+        downSample4 = downSample4.contiguous().permute(0, 2, 3, 1).contiguous()
         # fc = torch.sigmoid(self.fc(downSample3))
         # Taking off sigmoid layer to avoid vanishing gradient problem
-        fc = self.fc(downSample3)
+        #fc = self.fc(downSample4)
+        fc = torch.sigmoid(downSample4)
         return fc
 
 
