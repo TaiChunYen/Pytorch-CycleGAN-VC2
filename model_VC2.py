@@ -24,7 +24,7 @@ class up_2Dsample(nn.Module):
         h = input.shape[2]
         w = input.shape[3]
         new_size = [h * self.scale_factor, w * self.scale_factor]
-        return F.upsample(input,new_size)
+        return F.interpolate(input,new_size)
        
 
 class PixelShuffle(nn.Module):
@@ -182,7 +182,7 @@ class Generator(nn.Module):
                                                 stride=2,
                                                 padding=2)
         #reshape
-        self.conv2 = nn.Conv1d(in_channels=512,
+        self.conv2 = nn.Conv1d(in_channels=3072,
                                out_channels=512,
                                kernel_size=1,
                                stride=1)
@@ -220,7 +220,7 @@ class Generator(nn.Module):
                                             padding=1)
         #reshape
         self.conv3 = nn.Conv1d(in_channels=512,
-                               out_channels=512,
+                               out_channels=3072,
                                kernel_size=1,
                                stride=1)
 
@@ -251,21 +251,36 @@ class Generator(nn.Module):
         conv1 = self.conv1(input) * torch.sigmoid(self.conv1_gates(input))
 
         downsample1 = self.downSample1(conv1)
+        
         downsample2 = self.downSample2(downsample1)
-        downsample3 = downsample2.view([downsample2.shape[0],downsample2.shape[1],-1])
+        
+        downsample3 = downsample2.view([downsample2.shape[0],-1,downsample2.shape[3]])
+        
         downsample3 = self.conv2(downsample3)
+        
         residual_layer_1 = self.residualLayer1(downsample3)
+        
         residual_layer_2 = self.residualLayer2(residual_layer_1)
+        
         residual_layer_3 = self.residualLayer3(residual_layer_2)
+        
         residual_layer_4 = self.residualLayer4(residual_layer_3)
+        
         residual_layer_5 = self.residualLayer5(residual_layer_4)
+        
         residual_layer_6 = self.residualLayer6(residual_layer_5)
+        
         residual_layer_6 = self.conv3(residual_layer_6)
+        
         residual_layer_6 = residual_layer_6.view([downsample2.shape[0],downsample2.shape[1],downsample2.shape[2],downsample2.shape[3]])
+        
         upSample_layer_1 = self.upSample1(residual_layer_6)
+        
         upSample_layer_2 = self.upSample2(upSample_layer_1)
+        
         output = self.lastConvLayer(upSample_layer_2)
-        output = output.view([output.shape[0],-1,output.shape[3]])
+        
+        output = output.view([output.shape[0],output.shape[2],-1])
         return output
 
 
@@ -388,6 +403,7 @@ class Discriminator(nn.Module):
 
 
 if __name__ == '__main__':
+    
     # Generator Dimensionality Testing
     input = torch.randn(10, 24, 1100)  # (N, C_in, Width) For Conv1d
     np.random.seed(0)
@@ -396,11 +412,13 @@ if __name__ == '__main__':
     input = torch.from_numpy(input).float()
     # print(input)
     generator = Generator()
+    
     output = generator(input)
     print("Output shape Generator", output.shape)
-
+    
     # Discriminator Dimensionality Testing
     # input = torch.randn(32, 1, 24, 128)  # (N, C_in, height, width) For Conv2d
     discriminator = Discriminator()
+    #pdb.set_trace()
     output = discriminator(output)
     print("Output shape Discriminator", output.shape)
