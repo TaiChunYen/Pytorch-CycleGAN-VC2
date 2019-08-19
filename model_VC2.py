@@ -239,7 +239,7 @@ class Generator(nn.Module):
                                             padding=2)
 
         self.lastConvLayer = nn.Conv2d(in_channels=512,
-                                       out_channels=24,
+                                       out_channels=1,
                                        kernel_size=[5,15],
                                        stride=1,
                                        padding=[2,7])
@@ -280,7 +280,7 @@ class Generator(nn.Module):
         
         output = self.lastConvLayer(upSample_layer_2)
         
-        output = output.view([output.shape[0],output.shape[2],-1])
+        output = output.view([output.shape[0],-1,output.shape[3]])
         return output
 
 
@@ -352,8 +352,8 @@ class Discriminator(nn.Module):
                                                     padding=[0, 2])
 
         # Fully Connected Layer
-        '''self.fc = nn.Linear(in_features=1024,
-                            out_features=1)'''
+        self.fc = nn.Linear(in_features=1024,
+                            out_features=1)
 
         # output Layer
         self.output_layer = nn.Conv2d(in_channels=1024,
