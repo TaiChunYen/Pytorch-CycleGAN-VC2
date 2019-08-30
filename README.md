@@ -102,6 +102,34 @@ For example, to train CycleGAN model for voice conversion between ``SF1`` and ``
 ```bash
 $python train.py --logf0s_normalization ../cache/logf0s_normalization.npz --mcep_normalization ../cache/mcep_normalization.npz --coded_sps_A_norm coded_sps_A_norm --coded_sps_B_norm coded_sps_B_norm --resume_training_at ../cache/model_checkpoint/_CycleGAN_CheckPoint --validation_A_dir ../data/vcc2016_training/evaluation_all/SF1/ --output_A_dir ../data/vcc2016_training/converted_sound/SF1 --validation_B_dir ../data/vcc2016_training/evaluation_all/TF2/ --output_B_dir ../data/vcc2016_training/converted_sound/TF2/
 ```                                                
+
+### test model
+```bash
+$python test.py [--logf0s_normalization LOGF0S_NORMALIZATION]
+                [--mcep_normalization MCEP_NORMALIZATION]
+                [--model_checkpoint MODEL_CHECKPOINT]
+                [--test_A_dir VALIDATION_A_DIR]
+                [--output_A_dir OUTPUT_A_DIR]
+
+
+                optional arguments:
+
+                  --mcep_normalization MCEP_NORMALIZATION
+                                        Cached location for mcep normalization
+                  --model_checkpoint MODEL_CHECKPOINT
+                                        location where your model saved
+                  --test_A_dir VALIDATION_A_DIR
+                                        test set for sound source A
+                  --output_A_dir OUTPUT_A_DIR
+                                        output for converted Sound Source A
+```  
+
+For example, to test CycleGAN model for voice conversion between ``SF1`` and ``TF2``:
+
+```bash
+$python test.py --logf0s_normalization ../cache/logf0s_normalization.npz --mcep_normalization ../cache/mcep_normalization.npz --test_A_dir ../data/vcc2016_training/evaluation_all/SF1/ --output_A_dir ../data/vcc2016_training/converted_sound/SF1 --model_checkpoint ./model/_CycleGAN_CheckPoint
+```                                                
+
 ### result
 
 <p align="center">
